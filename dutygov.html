@@ -1,0 +1,1819 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>당직편성 자동 생성</title>
+    <style>
+:root {
+  color-scheme: light;
+  --bg: #f8fafd;
+  --surface: #ffffff;
+  --surface-soft: #f3f6fb;
+  --ink: #1f1f1f;
+  --muted: #5f6368;
+  --line: #d7dde7;
+  --line-strong: #b8c1cf;
+  --primary: #1565c0;
+  --primary-strong: #0d47a1;
+  --primary-soft: #e8f0fe;
+  --secondary: #00796b;
+  --secondary-strong: #005b50;
+  --holiday: #b3261e;
+  --holiday-soft: #fceeee;
+  --weekend: #8a5a00;
+  --weekend-soft: #fff4d6;
+  --changed: #6f5f00;
+  --changed-soft: #fff8d6;
+  --shadow-1: 0 1px 2px rgba(60, 64, 67, 0.18), 0 1px 3px rgba(60, 64, 67, 0.12);
+  --shadow-2: 0 2px 6px rgba(60, 64, 67, 0.16), 0 8px 24px rgba(60, 64, 67, 0.10);
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Roboto", "Noto Sans KR", "Pretendard", "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+  background:
+    linear-gradient(180deg, #eef4fb 0, #f8fafd 220px),
+    var(--bg);
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.shell {
+  width: min(1280px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 28px 0;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.topbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 2px 2px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: clamp(30px, 4vw, 42px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 388px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid rgba(215, 221, 231, 0.9);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+.input-panel {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dropzone {
+  min-height: 116px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  color: var(--muted);
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface-soft);
+  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.dropzone:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.dropzone input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+label span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #fff;
+  outline: 0;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 92px;
+  line-height: 1.45;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #8b96a6;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.14);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+button:hover:not(:disabled) {
+  box-shadow: var(--shadow-1);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+#generateButton {
+  color: #fff;
+  background: var(--primary);
+}
+
+#generateButton:hover {
+  background: var(--primary-strong);
+}
+
+#downloadButton {
+  color: #fff;
+  background: var(--secondary);
+}
+
+#downloadButton:hover {
+  background: var(--secondary-strong);
+}
+
+#downloadButton:disabled {
+  cursor: not-allowed;
+  background: #b9c1cc;
+  box-shadow: none;
+}
+
+.ghost-button {
+  border: 1px solid var(--line-strong);
+  color: var(--primary);
+  background: #fff;
+}
+
+.ghost-button:hover:not(:disabled) {
+  background: var(--primary-soft);
+}
+
+.status {
+  min-height: 40px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.preview-panel {
+  overflow: hidden;
+  box-shadow: var(--shadow-2);
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.summary {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.preview-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+}
+
+.slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: #c4ccd7;
+  transition: background 0.18s ease;
+}
+
+.slider::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-1);
+  transition: transform 0.18s ease;
+}
+
+.switch input:checked + .slider {
+  background: var(--secondary);
+}
+
+.switch input:checked + .slider::after {
+  transform: translateX(20px);
+}
+
+.switch input:disabled + .slider {
+  opacity: 0.55;
+}
+
+.compact-button {
+  min-height: 34px;
+  padding: 7px 13px;
+  font-size: 13px;
+}
+
+.compact-button:disabled {
+  cursor: not-allowed;
+  color: #788392;
+  background: #eef1f5;
+  box-shadow: none;
+}
+
+.preview-tables {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: var(--surface-soft);
+}
+
+.schedule-group {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--shadow-1);
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.group-head h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.group-head span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.table-wrap {
+  overflow: auto;
+  max-height: 46vh;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e7ebf1;
+  text-align: left;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--muted);
+  background: #f9fbfe;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+tbody tr {
+  transition: background 0.14s ease;
+}
+
+tbody tr:hover {
+  background: #f5f9ff;
+}
+
+tbody tr.drop-target {
+  outline: 2px solid var(--secondary);
+  outline-offset: -2px;
+  background: #e7f5f1;
+}
+
+tbody tr.changed-row {
+  background: var(--changed-soft);
+}
+
+.empty {
+  padding: 46px 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.date-main {
+  display: block;
+  font-weight: 700;
+}
+
+.date-note {
+  display: block;
+  margin-top: 2px;
+  color: var(--holiday);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-width: 58px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tag.weekday {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.tag.weekend {
+  color: var(--weekend);
+  background: var(--weekend-soft);
+}
+
+.tag.holiday {
+  color: var(--holiday);
+  background: var(--holiday-soft);
+}
+
+.assignee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 112px;
+  max-width: 180px;
+  min-height: 34px;
+  padding: 6px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink);
+  background: #fff;
+  cursor: grab;
+  font-weight: 700;
+}
+
+.assignee-chip:hover:not(:disabled) {
+  border-color: var(--secondary);
+  background: #f0faf7;
+}
+
+.assignee-chip:disabled {
+  cursor: default;
+  color: var(--ink);
+  background: #fff;
+}
+
+.assignee-chip.dragging {
+  opacity: 0.55;
+}
+
+.grip {
+  color: var(--muted);
+  letter-spacing: -2px;
+}
+
+.person-select {
+  min-width: 220px;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.manual-mark {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: var(--changed);
+  background: var(--changed-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.manual-muted {
+  color: #8b94a1;
+}
+
+@media (max-width: 880px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar,
+  .preview-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .preview-tools {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .shell {
+    width: min(100vw - 20px, 1280px);
+    padding: 14px 0;
+  }
+
+  .field-grid,
+  .actions {
+    grid-template-columns: 1fr;
+  }
+
+  .input-panel,
+  .preview-tables {
+    padding: 14px;
+  }
+}
+
+</style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">정부기관 당직편성</p>
+            <h1>당직표 자동 생성</h1>
+          </div>
+          <button id="sampleButton" class="ghost-button" type="button">샘플 순번파일</button>
+        </header>
+
+        <div class="layout">
+          <section class="panel input-panel">
+            <h2>순번파일</h2>
+            <label class="dropzone" for="fileInput">
+              <span id="fileLabel">.xlsx 또는 .csv 파일을 선택하세요</span>
+              <input id="fileInput" type="file" accept=".xlsx,.csv,text/csv" />
+            </label>
+
+            <div class="field-grid">
+              <label>
+                <span>편성 연도</span>
+                <input id="yearInput" type="number" min="2024" max="2030" />
+              </label>
+              <label>
+                <span>편성 월</span>
+                <select id="monthInput">
+                  <option value="1">1월</option>
+                  <option value="2">2월</option>
+                  <option value="3">3월</option>
+                  <option value="4">4월</option>
+                  <option value="5">5월</option>
+                  <option value="6">6월</option>
+                  <option value="7">7월</option>
+                  <option value="8">8월</option>
+                  <option value="9">9월</option>
+                  <option value="10">10월</option>
+                  <option value="11">11월</option>
+                  <option value="12">12월</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label>
+                <span>전월 평일 마지막 근무자</span>
+                <input id="weekdayLastNameInput" type="text" placeholder="예: 김민준" />
+              </label>
+              <label>
+                <span>전월 휴일 마지막 근무자</span>
+                <input id="holidayLastNameInput" type="text" placeholder="예: 이서연" />
+              </label>
+            </div>
+
+            <label class="wide-field">
+              <span>추가 휴일</span>
+              <textarea id="extraHolidays" rows="4" placeholder="예: 2026-05-01 근로자의날&#10;2026-10-08 임시공휴일"></textarea>
+            </label>
+
+            <label class="wide-field">
+              <span>저장 형식</span>
+              <select id="downloadFormat">
+                <option value="xlsx">Excel 통합 문서 (.xlsx)</option>
+                <option value="csv">CSV (.csv)</option>
+                <option value="html">HTML 문서 (.html)</option>
+                <option value="pdf">PDF 인쇄/저장 (.pdf)</option>
+              </select>
+            </label>
+
+            <div class="actions">
+              <button id="generateButton" type="button">당직표 생성</button>
+              <button id="downloadButton" type="button" disabled>파일 저장</button>
+            </div>
+            <p id="statusText" class="status">순번파일 칼럼은 순번, 소속부서, 이름이어야 합니다.</p>
+          </section>
+
+          <section class="panel preview-panel">
+            <div class="preview-head">
+              <div>
+                <h2>미리보기</h2>
+                <div class="summary" id="summaryText">파일을 업로드하면 배정 결과가 표시됩니다.</div>
+              </div>
+              <div class="preview-tools">
+                <label class="switch">
+                  <input id="editToggle" type="checkbox" disabled />
+                  <span class="slider"></span>
+                  <span>수정 모드</span>
+                </label>
+                <button id="resetButton" class="ghost-button compact-button" type="button" disabled>초기화</button>
+              </div>
+            </div>
+            <div id="previewTables" class="preview-tables">
+              <div class="empty">아직 생성된 당직표가 없습니다.</div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script>
+"use strict";
+
+const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+const appState = {
+  roster: [],
+  schedule: [],
+  originalSchedule: [],
+  fileName: "",
+  editMode: false,
+  dragSourceIndex: null,
+};
+
+const elements = {
+  fileInput: document.querySelector("#fileInput"),
+  fileLabel: document.querySelector("#fileLabel"),
+  yearInput: document.querySelector("#yearInput"),
+  monthInput: document.querySelector("#monthInput"),
+  weekdayLastNameInput: document.querySelector("#weekdayLastNameInput"),
+  holidayLastNameInput: document.querySelector("#holidayLastNameInput"),
+  extraHolidays: document.querySelector("#extraHolidays"),
+  downloadFormat: document.querySelector("#downloadFormat"),
+  generateButton: document.querySelector("#generateButton"),
+  downloadButton: document.querySelector("#downloadButton"),
+  sampleButton: document.querySelector("#sampleButton"),
+  editToggle: document.querySelector("#editToggle"),
+  resetButton: document.querySelector("#resetButton"),
+  previewTables: document.querySelector("#previewTables"),
+  statusText: document.querySelector("#statusText"),
+  summaryText: document.querySelector("#summaryText"),
+};
+
+const today = new Date();
+elements.yearInput.value = today.getFullYear();
+elements.monthInput.value = today.getMonth() + 1;
+
+elements.fileInput.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const rows = await readRosterFile(file);
+    appState.roster = normalizeRoster(rows);
+    appState.fileName = file.name;
+    elements.fileLabel.textContent = `${file.name} (${appState.roster.length}명)`;
+    setStatus(`순번파일을 읽었습니다. ${appState.roster.length}명의 당직 대상자가 있습니다.`);
+    clearSchedule();
+  } catch (error) {
+    appState.roster = [];
+    clearSchedule();
+    setStatus(error.message, true);
+  }
+});
+
+elements.generateButton.addEventListener("click", () => {
+  try {
+    if (appState.roster.length === 0) {
+      throw new Error("먼저 당직근무 순번파일을 업로드하세요.");
+    }
+
+    const year = Number(elements.yearInput.value);
+    const month = Number(elements.monthInput.value);
+    validateMonth(year, month);
+
+    const holidays = buildHolidayMap(year, elements.extraHolidays.value);
+    const previousLast = getPreviousLastNames(appState.roster);
+    appState.schedule = createSchedule(appState.roster, year, month, holidays, previousLast);
+    appState.originalSchedule = cloneSchedule(appState.schedule);
+    renderSchedule(appState.schedule);
+    elements.downloadButton.disabled = false;
+    elements.editToggle.disabled = false;
+    elements.resetButton.disabled = false;
+    setStatus("당직표가 생성되었습니다. 휴일과 주말은 평일 당직 순번의 역순으로 배정했습니다.");
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+});
+
+elements.downloadButton.addEventListener("click", () => {
+  if (appState.schedule.length === 0) return;
+
+  const year = Number(elements.yearInput.value);
+  const month = Number(elements.monthInput.value);
+  const format = elements.downloadFormat.value;
+  const fileBaseName = `당직편성_${year}-${String(month).padStart(2, "0")}`;
+
+  if (format === "pdf") {
+    openPdfPrint(appState.schedule, year, month);
+    setStatus("인쇄 대화상자가 열리면 대상에서 PDF 저장을 선택하세요.");
+    return;
+  }
+
+  const blob = buildDownloadBlob(format, appState.schedule, year, month);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${fileBaseName}.${format}`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+});
+
+elements.sampleButton.addEventListener("click", () => {
+  const csv = "\ufeff순번,소속부서,이름\n1,운영지원과,김민준\n2,기획예산과,이서연\n3,민원봉사과,박지훈\n4,안전관리과,최하은\n5,정보화담당관,정도윤\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "당직근무_순번파일_샘플.csv";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+});
+
+elements.editToggle.addEventListener("change", () => {
+  appState.editMode = elements.editToggle.checked;
+  renderSchedule(appState.schedule);
+  setStatus(appState.editMode
+    ? "수정 모드가 켜졌습니다. 담당자 칩을 다른 날짜로 끌어 교체하거나 드롭다운으로 변경하세요."
+    : "수정 모드가 꺼졌습니다. 현재 미리보기 배정표가 다운로드에 반영됩니다.");
+});
+
+elements.resetButton.addEventListener("click", () => {
+  if (appState.originalSchedule.length === 0) return;
+  appState.schedule = cloneSchedule(appState.originalSchedule);
+  renderSchedule(appState.schedule);
+  setStatus("자동 생성 직후의 당직표로 되돌렸습니다.");
+});
+
+elements.previewTables.addEventListener("dragstart", (event) => {
+  const handle = event.target.closest("[data-drag-index]");
+  if (!handle || !appState.editMode) return;
+  appState.dragSourceIndex = Number(handle.dataset.dragIndex);
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", String(appState.dragSourceIndex));
+  handle.classList.add("dragging");
+});
+
+elements.previewTables.addEventListener("dragend", (event) => {
+  event.target.closest("[data-drag-index]")?.classList.remove("dragging");
+  elements.previewTables.querySelectorAll(".drop-target").forEach((row) => row.classList.remove("drop-target"));
+  appState.dragSourceIndex = null;
+});
+
+elements.previewTables.addEventListener("dragover", (event) => {
+  if (!appState.editMode || appState.dragSourceIndex === null) return;
+  const row = event.target.closest("[data-row-index]");
+  if (!row) return;
+  event.preventDefault();
+  row.classList.add("drop-target");
+});
+
+elements.previewTables.addEventListener("dragleave", (event) => {
+  event.target.closest("[data-row-index]")?.classList.remove("drop-target");
+});
+
+elements.previewTables.addEventListener("drop", (event) => {
+  if (!appState.editMode) return;
+  const row = event.target.closest("[data-row-index]");
+  if (!row) return;
+  event.preventDefault();
+  const sourceIndex = Number(event.dataTransfer.getData("text/plain") || appState.dragSourceIndex);
+  const targetIndex = Number(row.dataset.rowIndex);
+  row.classList.remove("drop-target");
+  swapAssignees(sourceIndex, targetIndex);
+});
+
+elements.previewTables.addEventListener("change", (event) => {
+  const select = event.target.closest("[data-select-index]");
+  if (!select) return;
+  const rowIndex = Number(select.dataset.selectIndex);
+  const rosterIndex = Number(select.value);
+  assignPerson(rowIndex, appState.roster[rosterIndex]);
+  setStatus(`${appState.schedule[rowIndex].date} 당직자를 ${appState.schedule[rowIndex].name}으로 변경했습니다.`);
+});
+
+function setStatus(message, isError = false) {
+  elements.statusText.textContent = message;
+  elements.statusText.style.color = isError ? "#b04747" : "";
+}
+
+function clearSchedule() {
+  appState.schedule = [];
+  appState.originalSchedule = [];
+  appState.editMode = false;
+  appState.dragSourceIndex = null;
+  elements.downloadButton.disabled = true;
+  elements.editToggle.checked = false;
+  elements.editToggle.disabled = true;
+  elements.resetButton.disabled = true;
+  elements.summaryText.textContent = "파일을 업로드하면 배정 결과가 표시됩니다.";
+  elements.previewTables.innerHTML = `<div class="empty">아직 생성된 당직표가 없습니다.</div>`;
+}
+
+async function readRosterFile(file) {
+  const extension = file.name.split(".").pop().toLowerCase();
+  if (extension === "csv") {
+    return parseCsv(await file.text());
+  }
+  if (extension === "xlsx") {
+    const buffer = await file.arrayBuffer();
+    return parseXlsx(buffer);
+  }
+  throw new Error(".xlsx 또는 .csv 파일만 업로드할 수 있습니다.");
+}
+
+function normalizeRoster(rows) {
+  if (!rows.length) throw new Error("순번파일에 데이터가 없습니다.");
+
+  const header = rows[0].map((value) => normalizeHeader(value));
+  const indexes = {
+    order: header.indexOf("순번"),
+    department: header.indexOf("소속부서"),
+    name: header.indexOf("이름"),
+  };
+
+  if (Object.values(indexes).some((index) => index === -1)) {
+    throw new Error("순번파일 첫 행에 순번, 소속부서, 이름 칼럼이 모두 있어야 합니다.");
+  }
+
+  const roster = rows
+    .slice(1)
+    .map((row) => ({
+      order: cleanCell(row[indexes.order]),
+      department: cleanCell(row[indexes.department]),
+      name: cleanCell(row[indexes.name]),
+    }))
+    .filter((person) => person.order || person.department || person.name);
+
+  if (!roster.length) throw new Error("당직 대상자 행을 찾지 못했습니다.");
+  if (roster.some((person) => !person.name)) throw new Error("이름이 비어 있는 당직 대상자가 있습니다.");
+
+  return roster.sort((a, b) => Number(a.order) - Number(b.order));
+}
+
+function normalizeHeader(value) {
+  return cleanCell(value).replace(/[<>\s]/g, "");
+}
+
+function cleanCell(value) {
+  return String(value ?? "").trim();
+}
+
+function validateMonth(year, month) {
+  if (!Number.isInteger(year) || year < 2024 || year > 2030) {
+    throw new Error("현재 내장 공휴일 자료는 2024년부터 2030년까지 지원합니다.");
+  }
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error("편성 월을 올바르게 선택하세요.");
+  }
+}
+
+function getPreviousLastNames(roster) {
+  const weekdayLastName = cleanCell(elements.weekdayLastNameInput.value);
+  const holidayLastName = cleanCell(elements.holidayLastNameInput.value);
+
+  validatePreviousLastName(weekdayLastName, roster, "전월 평일 마지막 근무자");
+  validatePreviousLastName(holidayLastName, roster, "전월 휴일 마지막 근무자");
+
+  return {
+    weekdayLastName,
+    holidayLastName,
+  };
+}
+
+function validatePreviousLastName(name, roster, label) {
+  if (!name) return;
+  if (!roster.some((person) => sameName(person.name, name))) {
+    throw new Error(`${label} 이름은 순번파일 안에 있는 이름과 정확히 일치해야 합니다.`);
+  }
+}
+
+function createSchedule(roster, year, month, holidays, previousLast = {}) {
+  const reverseRoster = [...roster].reverse();
+  let weekdayIndex = getNextRosterIndex(roster, previousLast.weekdayLastName);
+  let holidayIndex = getNextRosterIndex(reverseRoster, previousLast.holidayLastName);
+  const result = [];
+  const lastDay = new Date(year, month, 0).getDate();
+
+  for (let day = 1; day <= lastDay; day += 1) {
+    const date = new Date(year, month - 1, day);
+    const key = formatDate(date);
+    const holidayName = holidays.get(key);
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const isHoliday = Boolean(holidayName);
+    const person = isWeekend || isHoliday
+      ? reverseRoster[holidayIndex++ % reverseRoster.length]
+      : roster[weekdayIndex++ % roster.length];
+
+    result.push({
+      date: key,
+      dayName: dayNames[date.getDay()],
+      type: isHoliday ? "공휴일" : isWeekend ? "주말" : "평일",
+      holidayName: holidayName || "",
+      order: person.order,
+      department: person.department,
+      name: person.name,
+    });
+  }
+
+  return result;
+}
+
+function getNextRosterIndex(sequence, previousLastName) {
+  if (!previousLastName) return 0;
+  const currentIndex = sequence.findIndex((person) => sameName(person.name, previousLastName));
+  return currentIndex === -1 ? 0 : (currentIndex + 1) % sequence.length;
+}
+
+function sameName(left, right) {
+  return cleanCell(left) === cleanCell(right);
+}
+
+function buildHolidayMap(year, extraText) {
+  const holidays = new Map();
+
+  addFixedHoliday(holidays, year, 1, 1, "신정");
+  addFixedHoliday(holidays, year, 3, 1, "삼일절");
+  addFixedHoliday(holidays, year, 5, 5, "어린이날");
+  addFixedHoliday(holidays, year, 6, 6, "현충일");
+  addFixedHoliday(holidays, year, 8, 15, "광복절");
+  addFixedHoliday(holidays, year, 10, 3, "개천절");
+  addFixedHoliday(holidays, year, 10, 9, "한글날");
+  addFixedHoliday(holidays, year, 12, 25, "성탄절");
+
+  const lunar = lunarHolidayData[year];
+  if (lunar) {
+    lunar.seollal.forEach((date, index) => holidays.set(date, ["설날 전일", "설날", "설날 다음날"][index]));
+    holidays.set(lunar.buddha, "부처님오신날");
+    lunar.chuseok.forEach((date, index) => holidays.set(date, ["추석 전일", "추석", "추석 다음날"][index]));
+  }
+
+  const election = electionHolidayData[year];
+  if (election) {
+    election.forEach(([date, name]) => holidays.set(date, name));
+  }
+
+  addSubstituteHolidays(holidays);
+  parseExtraHolidays(extraText).forEach((name, date) => holidays.set(date, name));
+  return holidays;
+}
+
+function addFixedHoliday(holidays, year, month, day, name) {
+  holidays.set(`${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`, name);
+}
+
+function addSubstituteHolidays(holidays) {
+  const weekendEligible = ["삼일절", "어린이날", "부처님오신날", "광복절", "개천절", "한글날", "성탄절"];
+  const additions = [];
+
+  [...holidays.entries()].forEach(([date, name]) => {
+    const day = dayOfWeek(date);
+    const isLunarHoliday = name.includes("설날") || name.includes("추석");
+    const isEligible = weekendEligible.some((keyword) => name.includes(keyword));
+    if (isLunarHoliday && day !== 0) return;
+    if (!isLunarHoliday && (!isEligible || (day !== 0 && day !== 6))) return;
+
+    let next = addDays(date, 1);
+    while (holidays.has(next) || additions.some(([candidate]) => candidate === next) || dayOfWeek(next) === 0 || dayOfWeek(next) === 6) {
+      next = addDays(next, 1);
+    }
+    additions.push([next, `${name} 대체공휴일`]);
+  });
+
+  additions.forEach(([date, name]) => holidays.set(date, name));
+}
+
+function parseExtraHolidays(text) {
+  const holidays = new Map();
+  text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .forEach((line) => {
+      const match = line.match(/^(\d{4}-\d{2}-\d{2})(?:\s+(.+))?$/);
+      if (!match) return;
+      holidays.set(match[1], match[2] || "추가 휴일");
+    });
+  return holidays;
+}
+
+const lunarHolidayData = {
+  2024: { seollal: ["2024-02-09", "2024-02-10", "2024-02-11"], buddha: "2024-05-15", chuseok: ["2024-09-16", "2024-09-17", "2024-09-18"] },
+  2025: { seollal: ["2025-01-28", "2025-01-29", "2025-01-30"], buddha: "2025-05-05", chuseok: ["2025-10-05", "2025-10-06", "2025-10-07"] },
+  2026: { seollal: ["2026-02-16", "2026-02-17", "2026-02-18"], buddha: "2026-05-24", chuseok: ["2026-09-24", "2026-09-25", "2026-09-26"] },
+  2027: { seollal: ["2027-02-06", "2027-02-07", "2027-02-08"], buddha: "2027-05-13", chuseok: ["2027-09-14", "2027-09-15", "2027-09-16"] },
+  2028: { seollal: ["2028-01-26", "2028-01-27", "2028-01-28"], buddha: "2028-05-02", chuseok: ["2028-10-02", "2028-10-03", "2028-10-04"] },
+  2029: { seollal: ["2029-02-12", "2029-02-13", "2029-02-14"], buddha: "2029-05-20", chuseok: ["2029-09-21", "2029-09-22", "2029-09-23"] },
+  2030: { seollal: ["2030-02-02", "2030-02-03", "2030-02-04"], buddha: "2030-05-09", chuseok: ["2030-09-11", "2030-09-12", "2030-09-13"] },
+};
+
+const electionHolidayData = {
+  2024: [["2024-04-10", "국회의원선거일"]],
+  2026: [["2026-06-03", "전국동시지방선거일"]],
+};
+
+function renderSchedule(schedule) {
+  const weekdayCount = schedule.filter((row) => row.type === "평일").length;
+  const weekendCount = schedule.filter((row) => row.type === "주말").length;
+  const holidayCount = schedule.filter((row) => row.type === "공휴일").length;
+  const changedCount = countChangedRows(schedule, appState.originalSchedule);
+  const editNotice = changedCount ? ` · 수동수정 ${changedCount}건` : "";
+  elements.summaryText.textContent = `평일 ${weekdayCount}일 · 주말 ${weekendCount}일 · 공휴일 ${holidayCount}일${editNotice}`;
+  const weekdayRows = schedule
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => row.type === "평일");
+  const holidayRows = schedule
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => row.type !== "평일");
+
+  elements.previewTables.innerHTML = `
+    ${renderScheduleGroup("평일당직", `${weekdayRows.length}일`, weekdayRows)}
+    ${renderScheduleGroup("휴일당직", `${holidayRows.length}일`, holidayRows)}
+  `;
+}
+
+function renderScheduleGroup(title, countText, rows) {
+  return `
+    <section class="schedule-group">
+      <div class="group-head">
+        <h3>${escapeHtml(title)}</h3>
+        <span>${escapeHtml(countText)}</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>요일</th>
+              <th>소속부서</th>
+              <th>이름</th>
+              <th>조정</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.length ? rows.map(({ row, index }) => renderScheduleRow(row, index)).join("") : `<tr><td colspan="5" class="empty">표시할 당직이 없습니다.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+function renderScheduleRow(row, index) {
+  return `
+    <tr data-row-index="${index}" class="${isChangedRow(row, appState.originalSchedule[index]) ? "changed-row" : ""}">
+      <td>
+        <span class="date-main">${escapeHtml(formatShortDate(row.date))}</span>
+        ${row.holidayName ? `<span class="date-note">${escapeHtml(row.holidayName)}</span>` : ""}
+      </td>
+      <td>${escapeHtml(row.dayName)}</td>
+      <td>${escapeHtml(row.department)}</td>
+      <td>
+        <button class="assignee-chip" type="button" draggable="${appState.editMode}" data-drag-index="${index}" ${appState.editMode ? "" : "disabled"}>
+          <span class="grip" aria-hidden="true">⋮⋮</span>
+          <span>${escapeHtml(row.name)}</span>
+        </button>
+      </td>
+      <td>${renderAssignmentControl(row, index)}</td>
+    </tr>
+  `;
+}
+
+function renderAssignmentControl(row, rowIndex) {
+  if (!appState.editMode) {
+    return isChangedRow(row, appState.originalSchedule[rowIndex])
+      ? `<span class="manual-mark">수정됨</span>`
+      : `<span class="manual-muted">-</span>`;
+  }
+
+  return `
+    <select class="person-select" data-select-index="${rowIndex}" aria-label="${escapeHtml(row.date)} 담당자 변경">
+      ${appState.roster.map((person, rosterIndex) => `
+        <option value="${rosterIndex}" ${samePerson(row, person) ? "selected" : ""}>
+          ${escapeHtml(person.order)} · ${escapeHtml(person.department)} · ${escapeHtml(person.name)}
+        </option>
+      `).join("")}
+    </select>
+  `;
+}
+
+function swapAssignees(sourceIndex, targetIndex) {
+  if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex) || sourceIndex === targetIndex) return;
+  const source = appState.schedule[sourceIndex];
+  const target = appState.schedule[targetIndex];
+  if (!source || !target) return;
+
+  const sourcePerson = pickAssignee(source);
+  assignPerson(sourceIndex, pickAssignee(target), false);
+  assignPerson(targetIndex, sourcePerson, false);
+  renderSchedule(appState.schedule);
+  setStatus(`${source.date}와 ${target.date}의 당직자를 서로 교체했습니다.`);
+}
+
+function assignPerson(rowIndex, person, shouldRender = true) {
+  if (!person || !appState.schedule[rowIndex]) return;
+  appState.schedule[rowIndex] = {
+    ...appState.schedule[rowIndex],
+    order: person.order,
+    department: person.department,
+    name: person.name,
+  };
+  if (shouldRender) renderSchedule(appState.schedule);
+}
+
+function pickAssignee(row) {
+  return {
+    order: row.order,
+    department: row.department,
+    name: row.name,
+  };
+}
+
+function samePerson(row, person) {
+  return row.order === person.order && row.department === person.department && row.name === person.name;
+}
+
+function cloneSchedule(schedule) {
+  return schedule.map((row) => ({ ...row }));
+}
+
+function countChangedRows(schedule, originalSchedule) {
+  return schedule.filter((row, index) => isChangedRow(row, originalSchedule[index])).length;
+}
+
+function isChangedRow(row, originalRow) {
+  if (!row || !originalRow) return false;
+  return row.order !== originalRow.order || row.department !== originalRow.department || row.name !== originalRow.name;
+}
+
+function typeClass(type) {
+  if (type === "공휴일") return "holiday";
+  if (type === "주말") return "weekend";
+  return "weekday";
+}
+
+function buildSpreadsheetXml(schedule, year, month) {
+  const rows = scheduleToRows(schedule);
+  return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#DCEAF7" ss:Pattern="Solid"/></Style>
+  <Style ss:ID="Holiday"><Interior ss:Color="#F8DDDD" ss:Pattern="Solid"/></Style>
+  <Style ss:ID="Weekend"><Interior ss:Color="#FFF0C4" ss:Pattern="Solid"/></Style>
+ </Styles>
+ <Worksheet ss:Name="${escapeXml(`${year}년 ${month}월`)}">
+  <Table>
+   ${rows.map((row, index) => `<Row>${row.map((cell) => `<Cell${index === 0 ? ' ss:StyleID="Header"' : ""}><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join("")}</Row>`).join("\n   ")}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+}
+
+function buildDownloadBlob(format, schedule, year, month) {
+  if (format === "csv") return buildCsvBlob(schedule);
+  if (format === "html") return buildHtmlBlob(schedule, year, month);
+  return buildXlsxBlob(schedule, year, month);
+}
+
+function buildCsvBlob(schedule) {
+  const rows = scheduleToRows(schedule);
+  const csv = rows
+    .map((row) => row.map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(","))
+    .join("\r\n");
+  return new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
+}
+
+function buildHtmlBlob(schedule, year, month) {
+  return new Blob(["\ufeff", buildHtmlDocument(schedule, year, month)], { type: "text/html;charset=utf-8" });
+}
+
+function buildHtmlDocument(schedule, year, month) {
+  const weekdayRows = schedule.filter((row) => row.type === "평일");
+  const holidayRows = schedule.filter((row) => row.type !== "평일");
+  return `<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>당직편성 ${year}-${String(month).padStart(2, "0")}</title>
+    <style>
+      body {
+        margin: 32px;
+        color: #1f1f1f;
+        font-family: "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 26px;
+      }
+      .meta {
+        margin: 0 0 24px;
+        color: #5f6368;
+      }
+      section {
+        margin-top: 24px;
+        break-inside: avoid;
+      }
+      .tables {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+      h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+      th,
+      td {
+        border: 1px solid #d7dde7;
+        padding: 8px 10px;
+        text-align: left;
+        font-size: 13px;
+        word-break: keep-all;
+      }
+      th {
+        color: #ffffff;
+        background: #1565c0;
+      }
+      tr:nth-child(even) td {
+        background: #f8fafd;
+      }
+      .holiday {
+        color: #b3261e;
+        font-weight: 700;
+      }
+      .holiday-name {
+        color: #5f6368;
+        font-size: 12px;
+      }
+      @media (max-width: 900px) {
+        .tables {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media print {
+        body {
+          margin: 18mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>${escapeHtml(`${year}년 ${month}월 당직편성표`)}</h1>
+    <p class="meta">평일 ${weekdayRows.length}일 · 휴일 ${holidayRows.length}일 · 생성일 ${escapeHtml(formatDate(new Date()))}</p>
+    <div class="tables">
+      ${buildHtmlScheduleSection("평일당직", weekdayRows)}
+      ${buildHtmlScheduleSection("휴일당직", holidayRows)}
+    </div>
+  </body>
+</html>`;
+}
+
+function buildHtmlScheduleSection(title, rows) {
+  return `
+    <section>
+      <h2>${escapeHtml(title)}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>요일</th>
+            <th>소속부서</th>
+            <th>이름</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `
+            <tr>
+              <td>${escapeHtml(formatShortDate(row.date))}${row.holidayName ? `<div class="holiday-name">${escapeHtml(row.holidayName)}</div>` : ""}</td>
+              <td>${escapeHtml(row.dayName)}</td>
+              <td>${escapeHtml(row.department)}</td>
+              <td>${escapeHtml(row.name)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </section>
+  `;
+}
+
+function openPdfPrint(schedule, year, month) {
+  const html = buildHtmlDocument(schedule, year, month);
+  const blob = new Blob(["\ufeff", html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const frame = document.createElement("iframe");
+  frame.style.position = "fixed";
+  frame.style.right = "0";
+  frame.style.bottom = "0";
+  frame.style.width = "1px";
+  frame.style.height = "1px";
+  frame.style.border = "0";
+  frame.style.opacity = "0";
+  frame.src = url;
+  frame.onload = () => {
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+    setTimeout(() => {
+      frame.remove();
+      URL.revokeObjectURL(url);
+    }, 60000);
+  };
+  document.body.append(frame);
+}
+
+function buildXlsxBlob(schedule, year, month) {
+  const rows = scheduleToRows(schedule);
+  const sheetName = `${year}년 ${month}월`;
+  const worksheetXml = buildWorksheetXml(rows);
+  const files = [
+    {
+      name: "[Content_Types].xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`,
+    },
+    {
+      name: "_rels/.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`,
+    },
+    {
+      name: "xl/workbook.xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="${escapeXml(sheetName)}" sheetId="1" r:id="rId1"/>
+  </sheets>
+</workbook>`,
+    },
+    {
+      name: "xl/_rels/workbook.xml.rels",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`,
+    },
+    {
+      name: "xl/styles.xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="맑은 고딕"/></font></fonts>
+  <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF155FA0"/><bgColor indexed="64"/></patternFill></fill></fills>
+  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="1" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs>
+  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`,
+    },
+    {
+      name: "xl/worksheets/sheet1.xml",
+      content: worksheetXml,
+    },
+  ];
+
+  return new Blob([createZip(files)], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+}
+
+function scheduleToRows(schedule) {
+  const weekdayRows = schedule.filter((row) => row.type === "평일");
+  const holidayRows = schedule.filter((row) => row.type !== "평일");
+  const maxRows = Math.max(weekdayRows.length, holidayRows.length);
+  const rows = [
+    ["평일당직", "", "", "", "", "휴일당직", "", "", ""],
+    ["날짜", "요일", "소속부서", "이름", "", "날짜", "요일", "소속부서", "이름"],
+  ];
+
+  for (let index = 0; index < maxRows; index += 1) {
+    const weekday = weekdayRows[index];
+    const holiday = holidayRows[index];
+    rows.push([
+      weekday ? formatShortDate(weekday.date) : "",
+      weekday?.dayName || "",
+      weekday?.department || "",
+      weekday?.name || "",
+      "",
+      holiday ? formatShortDate(holiday.date) : "",
+      holiday ? formatHolidayDay(holiday) : "",
+      holiday?.department || "",
+      holiday?.name || "",
+    ]);
+  }
+
+  return rows;
+}
+
+function buildWorksheetXml(rows) {
+  const colWidths = [10, 8, 18, 12, 3, 10, 15, 18, 12];
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+  <cols>${colWidths.map((width, index) => `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`).join("")}</cols>
+  <sheetData>
+    ${rows.map((row, rowIndex) => `<row r="${rowIndex + 1}">${row.map((cell, colIndex) => buildCellXml(cell, rowIndex, colIndex)).join("")}</row>`).join("\n    ")}
+  </sheetData>
+</worksheet>`;
+}
+
+function buildCellXml(value, rowIndex, colIndex) {
+  const address = `${columnIndexToName(colIndex)}${rowIndex + 1}`;
+  const style = rowIndex < 2 ? ' s="1"' : "";
+  return `<c r="${address}" t="inlineStr"${style}><is><t>${escapeXml(value)}</t></is></c>`;
+}
+
+function createZip(files) {
+  const encoder = new TextEncoder();
+  const chunks = [];
+  const centralChunks = [];
+  let offset = 0;
+
+  files.forEach((file) => {
+    const nameBytes = encoder.encode(file.name);
+    const contentBytes = encoder.encode(file.content);
+    const crc = crc32(contentBytes);
+    const localHeader = concatBytes(
+      uint32(0x04034b50),
+      uint16(20),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint32(crc),
+      uint32(contentBytes.length),
+      uint32(contentBytes.length),
+      uint16(nameBytes.length),
+      uint16(0),
+      nameBytes,
+    );
+
+    chunks.push(localHeader, contentBytes);
+
+    const centralHeader = concatBytes(
+      uint32(0x02014b50),
+      uint16(20),
+      uint16(20),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint32(crc),
+      uint32(contentBytes.length),
+      uint32(contentBytes.length),
+      uint16(nameBytes.length),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint16(0),
+      uint32(0),
+      uint32(offset),
+      nameBytes,
+    );
+    centralChunks.push(centralHeader);
+    offset += localHeader.length + contentBytes.length;
+  });
+
+  const centralDirectory = concatBytes(...centralChunks);
+  const endRecord = concatBytes(
+    uint32(0x06054b50),
+    uint16(0),
+    uint16(0),
+    uint16(files.length),
+    uint16(files.length),
+    uint32(centralDirectory.length),
+    uint32(offset),
+    uint16(0),
+  );
+
+  return concatBytes(...chunks, centralDirectory, endRecord);
+}
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc = (crc >>> 8) ^ crcTable[(crc ^ byte) & 0xff];
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+const crcTable = (() => {
+  const table = [];
+  for (let index = 0; index < 256; index += 1) {
+    let value = index;
+    for (let bit = 0; bit < 8; bit += 1) {
+      value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+    }
+    table[index] = value >>> 0;
+  }
+  return table;
+})();
+
+function uint16(value) {
+  const bytes = new Uint8Array(2);
+  new DataView(bytes.buffer).setUint16(0, value, true);
+  return bytes;
+}
+
+function uint32(value) {
+  const bytes = new Uint8Array(4);
+  new DataView(bytes.buffer).setUint32(0, value >>> 0, true);
+  return bytes;
+}
+
+function concatBytes(...parts) {
+  const totalLength = parts.reduce((total, part) => total + part.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  parts.forEach((part) => {
+    result.set(part, offset);
+    offset += part.length;
+  });
+  return result;
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+  const normalized = text.replace(/^\ufeff/, "");
+
+  for (let index = 0; index < normalized.length; index += 1) {
+    const char = normalized[index];
+    const next = normalized[index + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      cell += '"';
+      index += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(cell);
+      if (row.some((value) => value.trim())) rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+
+  row.push(cell);
+  if (row.some((value) => value.trim())) rows.push(row);
+  return rows;
+}
+
+async function parseXlsx(buffer) {
+  const entries = await unzip(buffer);
+  const workbook = parseXml(await readZipText(entries, "xl/workbook.xml"));
+  const rels = parseXml(await readZipText(entries, "xl/_rels/workbook.xml.rels"));
+  const sharedStrings = entries.has("xl/sharedStrings.xml")
+    ? parseSharedStrings(parseXml(await readZipText(entries, "xl/sharedStrings.xml")))
+    : [];
+
+  const sheetNode = firstByLocalName(workbook, "sheet");
+  if (!sheetNode) throw new Error("엑셀 파일에서 시트를 찾지 못했습니다.");
+
+  const relId = sheetNode.getAttribute("r:id");
+  const relNode = allByLocalName(rels, "Relationship").find((node) => node.getAttribute("Id") === relId);
+  if (!relNode) throw new Error("엑셀 시트 정보를 읽지 못했습니다.");
+
+  const target = relNode.getAttribute("Target").replace(/^\//, "");
+  const sheetPath = target.startsWith("xl/") ? target : `xl/${target}`;
+  const sheet = parseXml(await readZipText(entries, sheetPath));
+  return parseWorksheet(sheet, sharedStrings);
+}
+
+async function unzip(buffer) {
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  const entries = new Map();
+  const eocdOffset = findEndOfCentralDirectory(bytes);
+  const centralSize = view.getUint32(eocdOffset + 12, true);
+  const centralOffset = view.getUint32(eocdOffset + 16, true);
+  let offset = centralOffset;
+  const decoder = new TextDecoder();
+
+  while (offset < centralOffset + centralSize) {
+    if (view.getUint32(offset, true) !== 0x02014b50) break;
+    const method = view.getUint16(offset + 10, true);
+    const compressedSize = view.getUint32(offset + 20, true);
+    const fileNameLength = view.getUint16(offset + 28, true);
+    const extraLength = view.getUint16(offset + 30, true);
+    const commentLength = view.getUint16(offset + 32, true);
+    const localOffset = view.getUint32(offset + 42, true);
+    const name = decoder.decode(bytes.slice(offset + 46, offset + 46 + fileNameLength));
+
+    const localNameLength = view.getUint16(localOffset + 26, true);
+    const localExtraLength = view.getUint16(localOffset + 28, true);
+    const dataOffset = localOffset + 30 + localNameLength + localExtraLength;
+    const compressed = bytes.slice(dataOffset, dataOffset + compressedSize);
+    entries.set(name, { method, compressed });
+
+    offset += 46 + fileNameLength + extraLength + commentLength;
+  }
+
+  return entries;
+}
+
+function findEndOfCentralDirectory(bytes) {
+  for (let offset = bytes.length - 22; offset >= 0; offset -= 1) {
+    if (bytes[offset] === 0x50 && bytes[offset + 1] === 0x4b && bytes[offset + 2] === 0x05 && bytes[offset + 3] === 0x06) {
+      return offset;
+    }
+  }
+  throw new Error("엑셀 압축 구조를 읽지 못했습니다.");
+}
+
+async function readZipText(entries, name) {
+  const entry = entries.get(name);
+  if (!entry) throw new Error(`${name} 파일을 엑셀 문서에서 찾지 못했습니다.`);
+  const data = entry.method === 0 ? entry.compressed : await inflateRaw(entry.compressed);
+  return new TextDecoder().decode(data);
+}
+
+async function inflateRaw(bytes) {
+  if (!("DecompressionStream" in window)) {
+    throw new Error("현재 브라우저가 .xlsx 압축 해제를 지원하지 않습니다. CSV 파일로 업로드해 주세요.");
+  }
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+function parseXml(text) {
+  const doc = new DOMParser().parseFromString(text, "application/xml");
+  if (doc.querySelector("parsererror")) throw new Error("엑셀 XML 내용을 읽지 못했습니다.");
+  return doc;
+}
+
+function parseSharedStrings(doc) {
+  return allByLocalName(doc, "si").map((item) => allByLocalName(item, "t").map((node) => node.textContent).join(""));
+}
+
+function parseWorksheet(doc, sharedStrings) {
+  const rows = [];
+  allByLocalName(doc, "row").forEach((rowNode) => {
+    const row = [];
+    allByLocalName(rowNode, "c").forEach((cellNode) => {
+      const reference = cellNode.getAttribute("r") || "";
+      const columnIndex = columnNameToIndex(reference.replace(/\d/g, ""));
+      while (row.length < columnIndex) row.push("");
+      row[columnIndex] = readCell(cellNode, sharedStrings);
+    });
+    rows.push(row);
+  });
+  return rows;
+}
+
+function readCell(cellNode, sharedStrings) {
+  const type = cellNode.getAttribute("t");
+  if (type === "inlineStr") return firstByLocalName(cellNode, "t")?.textContent ?? "";
+  const value = firstByLocalName(cellNode, "v")?.textContent ?? "";
+  if (type === "s") return sharedStrings[Number(value)] ?? "";
+  return value;
+}
+
+function allByLocalName(root, localName) {
+  return [...root.getElementsByTagName("*")].filter((node) => node.localName === localName);
+}
+
+function firstByLocalName(root, localName) {
+  return allByLocalName(root, localName)[0] || null;
+}
+
+function columnNameToIndex(name) {
+  return [...name].reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1;
+}
+
+function columnIndexToName(index) {
+  let name = "";
+  let current = index + 1;
+  while (current > 0) {
+    const remainder = (current - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    current = Math.floor((current - 1) / 26);
+  }
+  return name;
+}
+
+function formatDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function formatShortDate(dateText) {
+  const [, month, day] = dateText.split("-");
+  return `${month}/${day}`;
+}
+
+function formatHolidayDay(row) {
+  return row.holidayName ? `${row.dayName} · ${row.holidayName}` : row.dayName;
+}
+
+function addDays(dateText, days) {
+  const [year, month, day] = dateText.split("-").map(Number);
+  const date = new Date(year, month - 1, day + days);
+  return formatDate(date);
+}
+
+function dayOfWeek(dateText) {
+  const [year, month, day] = dateText.split("-").map(Number);
+  return new Date(year, month - 1, day).getDay();
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function escapeXml(value) {
+  return escapeHtml(value);
+}
+
+</script>
+  </body>
+</html>
